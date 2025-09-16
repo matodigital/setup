@@ -13,52 +13,54 @@ NC='\033[0m'
 RATPOISON_REPO="https://git.savannah.nongnu.org/git/ratpoison.git"
 PATCHES_REPO="https://github.com/matodigital/ratpoison-patches.git"
 
-RATPOISON_DIR="ratpoison"
-PATCHES_DIR="ratpoison-patches"
+RATPOISON_DIR="$HOME/ratpoison"
+PATCHES_DIR="$HOME/ratpoison-patches"
 
 _die() {
-        printf "${RED}ERROR:${NC} %s\n" "$1" >&2
-        exit 1
+  printf "${RED}ERROR:${NC} %s\n" "$1" >&2
+  exit 1
 }
 
 _info() { printf "${BLUE}→${NC} %s\n" "$1"; }
-_ok() { printf "${GREEN}✔ %s${NC}\n" "$1"; }
+_ok()   { printf "${GREEN}✔ %s${NC}\n" "$1"; }
 _warn() { printf "${YELLOW}⚠ %s${NC}\n" "$1"; }
 
 trap 'rc=$?; if [ "$rc" -ne 0 ]; then printf "\n${RED}Script failed with exit code ${rc}.${NC}\n"; fi' EXIT
 
+cd "$HOME"
+
 if [ -d "$RATPOISON_DIR" ]; then
-        _warn "Directory '$RATPOISON_DIR' exists. Skipping clone."
+  _warn "Directory '$RATPOISON_DIR' exists. Skipping clone."
 else
-        _info "Cloning ratpoison into '$RATPOISON_DIR'..."
-        git clone --depth=1 "$RATPOISON_REPO" "$RATPOISON_DIR" &&
-                _ok "Cloned ratpoison." || _die "Failed to clone ratpoison."
+  _info "Cloning ratpoison into '$RATPOISON_DIR'..."
+  git clone --depth=1 "$RATPOISON_REPO" "$RATPOISON_DIR" \
+    && _ok "Cloned ratpoison." || _die "Failed to clone ratpoison."
 fi
 
 if [ -d "$PATCHES_DIR" ]; then
-        _warn "Directory '$PATCHES_DIR' exists. Removing its .git and reusing files."
+  _warn "Directory '$PATCHES_DIR' exists. Removing its .git and reusing files."
 else
-        _info "Cloning ratpoison-patches into '$PATCHES_DIR'..."
-        git clone --depth=1 "$PATCHES_REPO" "$PATCHES_DIR" &&
-                _ok "Cloned ratpoison-patches." || _die "Failed to clone ratpoison-patches."
+  _info "Cloning ratpoison-patches into '$PATCHES_DIR'..."
+  git clone --depth=1 "$PATCHES_REPO" "$PATCHES_DIR" \
+    && _ok "Cloned ratpoison-patches." || _die "Failed to clone ratpoison-patches."
 fi
 
 if [ -d "${PATCHES_DIR}/.git" ]; then
-        _info "Removing ${PATCHES_DIR}/.git ..."
-        rm -rf "${PATCHES_DIR}/.git" && _ok "Removed ${PATCHES_DIR}/.git" || _die "Couldn't remove ${PATCHES_DIR}/.git"
+  _info "Removing ${PATCHES_DIR}/.git ..."
+  rm -rf "${PATCHES_DIR}/.git" && _ok "Removed ${PATCHES_DIR}/.git" || _die "Couldn't remove ${PATCHES_DIR}/.git"
 fi
 
 mapfile -t PATCH_FILES < <(find "$PATCHES_DIR" -maxdepth 1 -type f -name "*.patch" | sort)
 
 if [ ${#PATCH_FILES[@]} -eq 0 ]; then
-        _die "No .patch files found in ${PATCHES_DIR}."
+  _die "No .patch files found in ${PATCHES_DIR}."
 else
-        _info "Found ${#PATCH_FILES[@]} patch(es) to apply."
+  _info "Found ${#PATCH_FILES[@]} patch(es) to apply."
 fi
 
 _info "Moving patches into '${RATPOISON_DIR}'..."
 for f in "${PATCH_FILES[@]}"; do
-        mv -f "$f" "${RATPOISON_DIR}/" || _die "Failed to move patch $f"
+  mv -f "$f" "${RATPOISON_DIR}/" || _die "Failed to move patch $f"
 done
 _ok "Moved all patches."
 
@@ -69,14 +71,14 @@ pushd "${RATPOISON_DIR}" >/dev/null
 
 mapfile -t PATCH_FILES < <(ls -1 *.patch | sort)
 for p in "${PATCH_FILES[@]}"; do
-        _info "Applying patch: $p"
-        if patch -p1 <"$p"; then
-                _ok "Applied $p"
-        else
-                _warn "Failed applying $p"
-                # Uncomment below to stop immediately on error:
-                # _die "Stopping due to failed patch $p"
-        fi
+  _info "Applying patch: $p"
+  if patch -p1 < "$p"; then
+    _ok "Applied $p"
+  else
+    _warn "Failed applying $p"
+    # Uncomment the line below to stop immediately on error
+    # _die "Stopping due to failed patch $p"
+  fi
 done
 
 popd >/dev/null
