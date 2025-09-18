@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
 RED='\033[0;31m'
@@ -8,57 +7,58 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-_info() { printf "${BLUE}→${NC} %s\n" "$1"; }
-_ok()   { printf "${GREEN}✔ %s${NC}\n" "$1"; }
-_warn() { printf "${YELLOW}⚠ %s${NC}\n" "$1"; }
-_die()  { printf "${RED}ERROR:${NC} %s\n" "$1"; exit 1; }
-
-RATPOISON_REPO="https://git.savannah.nongnu.org/git/ratpoison.git"
-PATCHES_REPO="https://github.com/matodigital/ratpoison-patches.git"
-
 RATPOISON_DIR="$HOME/ratpoison"
-PATCHES_DIR="$HOME/ratpoison-patches"
+RATPOISON_PATCHES_DIR="$HOME/ratpoison-patches"
+
+trap 'echo -e "${RED}[✗] Script failed at line $LINENO.${NC}" >&2' ERR
 
 cd "$HOME"
+echo -e "${YELLOW}[!] Cleaning old directories...${NC}"
+rm -rf "$RATPOISON_DIR" "$RATPOISON_PATCHES_DIR"
 
-_info "Cloning ratpoison..."
-rm -rf "$RATPOISON_DIR"
-git clone --depth=1 "$RATPOISON_REPO" "$RATPOISON_DIR" \
-  && _ok "Cloned ratpoison" || _die "Failed cloning ratpoison"
+echo -e "${BLUE}[*] Cloning ratpoison...${NC}"
+git clone https://git.savannah.nongnu.org/git/ratpoison.git "$RATPOISON_DIR"
 
-_info "Cloning ratpoison-patches..."
-rm -rf "$PATCHES_DIR"
-git clone --depth=1 "$PATCHES_REPO" "$PATCHES_DIR" \
-  && _ok "Cloned ratpoison-patches" || _die "Failed cloning ratpoison-patches"
+echo -e "${BLUE}[*] Cloning ratpoison patches...${NC}"
+git clone https://github.com/matodigital/ratpoison-patches.git "$RATPOISON_PATCHES_DIR"
 
-_info "Moving patches into ratpoison dir..."
-find "$PATCHES_DIR" -maxdepth 1 -type f -name "*.patch" -exec mv {} "$RATPOISON_DIR"/ \;
-_ok "Moved patches"
+PATCHES=(
+        "001-add-removeleft-up-right-down-commands.patch"
+        "002-manpage-layout-fixes.patch"
+        "003-ignorehints.patch"
+        "004-EWMH.patch"
+        "005-EWMH.patch"
+        "006-EWMH.patch"
+        "007-EWMH.patch"
+)
 
-_info "Removing patch repo..."
-rm -rf "$PATCHES_DIR"
-
-cd "$RATPOISON_DIR"
-
-_info "Applying patches..."
-for p in *.patch; do
-  [ -f "$p" ] || continue
-  _info "Applying $p"
-  patch -p1 < "$p" && _ok "Applied $p" || _die "Failed applying $p"
+echo -e "${BLUE}[*] Moving patches into ratpoison directory...${NC}"
+for patch in "${PATCHES[@]}"; do
+        mv "$RATPOISON_PATCHES_DIR/$patch" "$RATPOISON_DIR"
 done
 
-_info "Cleaning up patch files..."
-rm -f *.patch
-_ok "Removed patch files"
+rm -rf "$RATPOISON_PATCHES_DIR"
 
-_info "Building ratpoison..."
+cd "$RATPOISON_DIR"
+for patch in "${PATCHES[@]}"; do
+        echo -e "${YELLOW}[>] Applying ${patch}...${NC}"
+        patch -p1 <"$patch"
+done
+
+echo -e "${BLUE}[*] Removing applied patches...${NC}"
+rm -rf "${PATCHES[@]}"
+
+echo -e "${BLUE}[*] Running autogen.sh...${NC}"
 ./autogen.sh
+
+echo -e "${BLUE}[*] Running configure...${NC}"
 ./configure
+
+echo -e "${BLUE}[*] Building and installing...${NC}"
 sudo make install
-_ok "Installed ratpoison"
 
 cd "$HOME"
-_info "Removing ratpoison source dir..."
+echo -e "${BLUE}[*] Cleaning up ratpoison source...${NC}"
 rm -rf "$RATPOISON_DIR"
 
-_ok "All done!"
+echo -e "${GREEN}[✓] Ratpoison patched, built, and installed successfully!${NC}"
