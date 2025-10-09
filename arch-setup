@@ -9,39 +9,76 @@ NC='\033[0m'
 
 trap 'echo -e "${RED}[✗] Script failed at line $LINENO${NC}" >&2' ERR
 
-PKGS=(
-        xorg-server
-        xorg-xinit
-        xorg-xinput
-        xorg-setxkbmap
-        xterm
-        # xcolor
+usage() {
+        echo -e "${YELLOW}Usage:${NC} $0 {common|ratpoison|sway}"
+        exit 1
+}
 
-        gnu-free-fonts
+require_root() {
+        if ! command -v sudo >/dev/null 2>&1; then
+                echo -e "${RED}[✗] sudo not found. Please run as root or install sudo.${NC}" >&2
+                exit 1
+        fi
+        if ! sudo -v; then
+                echo -e "${RED}[✗] You must have sudo privileges to run this script.${NC}" >&2
+                exit 1
+        fi
+}
 
-        # dunst
-        maim
-        xwallpaper
-        # ? (swayidle)
-        slock
-        xorg-xev
-        xclip
-        screenkey
-        xdotool
+install_packages() {
+        if [[ ${#PKGS[@]} -gt 0 ]]; then
+                echo -e "${BLUE}[*] Installing official repo packages...${NC}"
+                sudo pacman -S --needed "${PKGS[@]}"
+                echo -e "${GREEN}[✓] Official repo packages installed/verified!${NC}"
+        else
+                echo -e "${YELLOW}[!] No official repo packages to install.${NC}"
+        fi
+}
 
+install_paru() {
+        if ! command -v paru >/dev/null 2>&1; then
+                echo -e "${BLUE}[*] Installing PARU...${NC}"
+                tmpdir=$(mktemp -d)
+                trap 'rm -rf "$tmpdir"' EXIT
+
+                (
+                        cd "$tmpdir"
+                        git clone https://aur.archlinux.org/paru.git
+                        cd paru
+                        echo -e "${YELLOW}[!] Building PARU...${NC}"
+                        makepkg -sirc
+                )
+
+                echo -e "${GREEN}[✓] PARU installed!${NC}"
+        else
+                echo -e "${GREEN}[✓] PARU already installed.${NC}"
+        fi
+}
+
+install_aur_packages() {
+        if [[ ${#AUR_PKGS[@]} -gt 0 ]]; then
+                echo -e "${BLUE}[*] Installing AUR packages...${NC}"
+                paru -S --needed "${AUR_PKGS[@]}"
+                echo -e "${GREEN}[✓] AUR packages installed/verified!${NC}"
+        else
+                echo -e "${YELLOW}[!] No AUR packages to install.${NC}"
+        fi
+}
+
+COMMON_PKGS=(
         7zip
-        asciinema
+        # asciinema
         asciiquarium
         astroterm
-        atac
+        # atac
         bc
         blueman
-        bluez # already installed by blueman
+        bluez
         bluez-utils
         bridge-utils
         brightnessctl
-        btop
-        calcurse
+        # btop
+        # calcurse
         chafa
         chromium
         clang
@@ -52,10 +89,9 @@ PKGS=(
         dmidecode
         dnsmasq
         docker
-        emacs
         fastfetch
         ffmpeg
-        figlet
+        # figlet
         firefox
         font-manager
         fq
@@ -64,74 +100,90 @@ PKGS=(
         gammastep
         gdb
         gedit
+        # ghidra
         ghostty
-        gimp
-        # git
-        gitu
-        glow
+        # gimp
+        git
+        # gitu
+        # glow
+        gnu-free-fonts
         go-yq
+        # graphviz
         htop
         imagemagick
         imv
+        iwd
         jc
-        jdk-openjdk
+        jdk17-openjdk
         jdk21-openjdk
         jq
         k9s
         kolourpaint
+        # krita
         lazydocker
         lazygit
         less
-        libzip # needed for php and composer via mise
+        libreoffice-still
+        libzip
         man-db
         mariadb
         minikube
         mise
         mpv
-        ncdu
+        # ncdu
         neovim
-        newsboat
-        noto-fonts-cjk
-        noto-fonts-emoji
+        # networkmanager
+        # newsboat
+        ninja
+        # noto-fonts-cjk
         obs-studio
         obsidian
-        pass
-        pastel
+        # pass
+        # pastel
         pavucontrol
+        # pipewire
+        # pipewire-alsa
+        # pipewire-pulse
         playerctl
         podman
         # polkit
         poppler
         postgresql
+        qemu-audio-spice
         qemu-base
+        qemu-chardev-spice
         qt5ct
         qt6ct
         qutebrowser
-        re2c # needed for php and composer via mise
+        re2c
         remmina
         ripgrep
         rsync
-        snes9x-gtk
+        satty
+        # snes9x-gtk
         solaar
         # sqlite
-        stow
+        # stow
         system-config-printer
-        task
+        # task
         thunar
+        # tlp
         tmux
         tree
         ttf-nerd-fonts-symbols
         udiskie
-        udisks2 # already installed by udiskie
+        udisks2
         unrar
         unzip
         usbutils
         # vifm
         virt-manager
-        webkit2gtk-4.1 # needed for tauri apps
+        webkit2gtk-4.1
         wezterm
         xdg-desktop-portal
         xdg-desktop-portal-gtk
+        # xf86-input-synaptics
+        # xournalpp
         yazi
         yt-dlp
         zathura
@@ -142,41 +194,115 @@ PKGS=(
         zip
 )
 
-AUR_PKGS=(
+RATPOISON_PKGS=(
+        # arandr
+        # dunst
+        emacs
+        maim
+        screenkey
+        slock
+        xclip
+        # xcolor
+        xdotool
+        xorg-server
+        xorg-setxkbmap
+        xorg-xev
+        xorg-xinit
+        xorg-xinput
+        xorg-xrandr
+        xterm
+        xwallpaper
+)
+
+SWAY_PKGS=(
+        emacs-wayland
+        foot
+        grim
+        i3status
+        mako
+        qt5-wayland
+        qt6-wayland
+        slurp
+        sway
+        swaybg
+        swayidle
+        swaylock
+        wev
+        wf-recorder
+        wl-clipboard
+        wl-mirror
+        wmenu
+        wtype
+        xdg-desktop-portal-wlr
+)
+
+COMMON_AUR_PKGS=(
         android-studio
-        bemoji
-        cbonsai
-        cursor-bin
+        # bemoji
+        # cursor-bin
+        # epson-inkjet-printer-escpr
         google-chrome
-        lavat-git
-        lazysql
-        localsend-bin
-        python-terminaltexteffects
-        timr
-        trmt
+        # localsend-bin
+        # python-terminaltexteffects
         # xfce-polkit
 )
+
+RATPOISON_AUR_PKGS=()
+
+SWAY_AUR_PKGS=(
+        wl-kbptr
+        wshowkeys-git
+)
+
+if [[ $# -ne 1 ]]; then
+        usage
+fi
+
+MODE="$1"
+case "$MODE" in
+common)
+        PKGS=("${COMMON_PKGS[@]}")
+        AUR_PKGS=("${COMMON_AUR_PKGS[@]}")
+        ;;
+ratpoison)
+        PKGS=("${COMMON_PKGS[@]}" "${RATPOISON_PKGS[@]}")
+        AUR_PKGS=("${COMMON_AUR_PKGS[@]}" "${RATPOISON_AUR_PKGS[@]}")
+        ;;
+sway)
+        PKGS=("${COMMON_PKGS[@]}" "${SWAY_PKGS[@]}")
+        AUR_PKGS=("${COMMON_AUR_PKGS[@]}" "${SWAY_AUR_PKGS[@]}")
+        ;;
+*)
+        usage
+        ;;
+esac
+
+require_root
 
 echo -e "${BLUE}[*] Updating system...${NC}"
 sudo pacman -Syu --noconfirm
 
-echo -e "${BLUE}[*] Installing official repo packages...${NC}"
-sudo pacman -S --needed "${PKGS[@]}"
-echo -e "${GREEN}[✓] Official repo packages installed!${NC}"
+install_packages
+install_paru
+install_aur_packages
 
-echo -e "${BLUE}[*] Installing PARU...${NC}"
-tmpdir=$(mktemp -d)
-cd "$tmpdir"
-git clone https://aur.archlinux.org/paru.git
-cd paru
-echo -e "${YELLOW}[!] Building PARU...${NC}"
-makepkg -sirc --noconfirm
-cd /
-rm -rf "$tmpdir"
-echo -e "${GREEN}[✓] PARU installed!${NC}"
+RATPOISON_INSTALLATION_SCRIPT="./ratpoison-setup"
+if [ "${MODE,,}" = "ratpoison" ]; then
+        echo -e "${BLUE}Setting up Ratpoison environment...${NC}"
 
-echo -e "${BLUE}[*] Installing AUR packages...${NC}"
-paru -S --needed "${AUR_PKGS[@]}"
-echo -e "${GREEN}[✓] AUR packages installed!${NC}"
+        if [ -x "$RATPOISON_INSTALLATION_SCRIPT" ]; then
+                echo -e "${GREEN}Executing ${RATPOISON_INSTALLATION_SCRIPT}${NC}"
+                "$RATPOISON_INSTALLATION_SCRIPT"
+        elif [ -e "$RATPOISON_INSTALLATION_SCRIPT" ]; then
+                echo -e "${YELLOW}Found ${RATPOISON_INSTALLATION_SCRIPT}, but it is not executable.${NC}"
+                echo -e "${RED}Try running: chmod +x ${RATPOISON_INSTALLATION_SCRIPT}${NC}"
+                exit 2
+        else
+                echo -e "${RED}Error:${NC} ${RATPOISON_INSTALLATION_SCRIPT} not found in $(pwd)"
+                exit 3
+        fi
+else
+        echo -e "${YELLOW}MODE is not 'ratpoison' — skipping setup.${NC}"
+fi
 
 echo -e "${GREEN}[✓] All installations completed successfully!${NC}"
