@@ -65,6 +65,28 @@ install_aur_packages() {
         fi
 }
 
+install_ratpoison() {
+        local RATPOISON_INSTALLATION_SCRIPT="./ratpoison-setup"
+
+        echo -e "${BLUE}Setting up Ratpoison environment...${NC}"
+
+        if [ ! -e "$RATPOISON_INSTALLATION_SCRIPT" ]; then
+                echo -e "${RED}Error:${NC} ${RATPOISON_INSTALLATION_SCRIPT} not found in $(pwd)"
+                return 3
+        fi
+
+        if [ ! -x "$RATPOISON_INSTALLATION_SCRIPT" ]; then
+                echo -e "${YELLOW}Making ${RATPOISON_INSTALLATION_SCRIPT} executable...${NC}"
+                chmod +x "$RATPOISON_INSTALLATION_SCRIPT" || {
+                        echo -e "${RED}Failed to chmod +x ${RATPOISON_INSTALLATION_SCRIPT}${NC}"
+                        return 2
+                }
+        fi
+
+        echo -e "${GREEN}Executing ${RATPOISON_INSTALLATION_SCRIPT}${NC}"
+        "$RATPOISON_INSTALLATION_SCRIPT"
+}
+
 COMMON_PKGS=(
         7zip
         # asciinema
@@ -237,11 +259,11 @@ SWAY_PKGS=(
 )
 
 COMMON_AUR_PKGS=(
-        android-studio
+        # android-studio
         # bemoji
         # cursor-bin
         # epson-inkjet-printer-escpr
-        google-chrome
+        # google-chrome
         # localsend-bin
         # python-terminaltexteffects
         # xfce-polkit
@@ -250,7 +272,7 @@ COMMON_AUR_PKGS=(
 RATPOISON_AUR_PKGS=()
 
 SWAY_AUR_PKGS=(
-        wl-kbptr
+        # wl-kbptr
         wshowkeys-git
 )
 
@@ -286,23 +308,10 @@ install_packages
 install_paru
 install_aur_packages
 
-RATPOISON_INSTALLATION_SCRIPT="./ratpoison-setup"
-if [ "${MODE,,}" = "ratpoison" ]; then
-        echo -e "${BLUE}Setting up Ratpoison environment...${NC}"
-
-        if [ -x "$RATPOISON_INSTALLATION_SCRIPT" ]; then
-                echo -e "${GREEN}Executing ${RATPOISON_INSTALLATION_SCRIPT}${NC}"
-                "$RATPOISON_INSTALLATION_SCRIPT"
-        elif [ -e "$RATPOISON_INSTALLATION_SCRIPT" ]; then
-                echo -e "${YELLOW}Found ${RATPOISON_INSTALLATION_SCRIPT}, but it is not executable.${NC}"
-                echo -e "${RED}Try running: chmod +x ${RATPOISON_INSTALLATION_SCRIPT}${NC}"
-                exit 2
-        else
-                echo -e "${RED}Error:${NC} ${RATPOISON_INSTALLATION_SCRIPT} not found in $(pwd)"
-                exit 3
-        fi
-else
-        echo -e "${YELLOW}MODE is not 'ratpoison' — skipping setup.${NC}"
-fi
+case "$MODE" in
+ratpoison)
+        install_ratpoison
+        ;;
+esac
 
 echo -e "${GREEN}[✓] All installations completed successfully!${NC}"
