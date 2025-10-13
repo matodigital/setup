@@ -114,8 +114,8 @@ COMMON_PKGS=(
         fastfetch
         ffmpeg
         # figlet
-        firefox
-        font-manager
+        # firefox
+        # font-manager
         fq
         freerdp
         fzf
@@ -128,7 +128,7 @@ COMMON_PKGS=(
         git
         # gitu
         # glow
-        gnu-free-fonts
+        # gnu-free-fonts
         go-yq
         # graphviz
         htop
@@ -136,10 +136,12 @@ COMMON_PKGS=(
         imv
         iwd
         jc
+        jdk-openjdk
         jdk17-openjdk
-        jdk21-openjdk
+        # jdk21-openjdk
         jq
         k9s
+        kdenlive
         kolourpaint
         # krita
         lazydocker
@@ -180,6 +182,7 @@ COMMON_PKGS=(
         re2c
         remmina
         ripgrep
+        # rnote
         rsync
         satty
         # snes9x-gtk
@@ -192,16 +195,18 @@ COMMON_PKGS=(
         # tlp
         tmux
         tree
-        ttf-nerd-fonts-symbols
+        # ttf-nerd-fonts-symbols
         udiskie
         udisks2
         unrar
         unzip
         usbutils
+        # valgrind
         # vifm
         virt-manager
         webkit2gtk-4.1
         wezterm
+        wget
         xdg-desktop-portal
         xdg-desktop-portal-gtk
         # xf86-input-synaptics
