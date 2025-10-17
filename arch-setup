@@ -90,8 +90,8 @@ install_ratpoison() {
 COMMON_PKGS=(
         7zip
         # asciinema
-        asciiquarium
-        astroterm
+        # asciiquarium
+        # astroterm
         # atac
         bc
         blueman
@@ -140,18 +140,18 @@ COMMON_PKGS=(
         jdk17-openjdk
         # jdk21-openjdk
         jq
-        k9s
-        kdenlive
+        # k9s
+        # kdenlive
         kolourpaint
         # krita
-        lazydocker
-        lazygit
+        # lazydocker
+        # lazygit
         less
         libreoffice-still
         libzip
         man-db
         mariadb
-        minikube
+        # minikube
         mise
         mpv
         # ncdu
@@ -169,7 +169,7 @@ COMMON_PKGS=(
         # pipewire-alsa
         # pipewire-pulse
         playerctl
-        podman
+        # podman
         # polkit
         poppler
         postgresql
